@@ -1,0 +1,28 @@
+# Build artifacts
+node_modules/
+dist/
+
+# Vercel
+.vercel/
+.now/
+
+# Environment variables
+.env
+.env.local
+.env*.local
+
+# Log files
+*.log
+server.log
+
+# Temporary files
+tmp/
+temp/
+
+# Debug files
+__debug*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+.vercel

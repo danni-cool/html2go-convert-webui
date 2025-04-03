@@ -39,7 +39,25 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Check workspace
         run: |
@@ -50,7 +68,7 @@ jobs:
           cat package.json
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Create public directory if needed
         run: |
@@ -90,15 +108,15 @@ jobs:
           # 设置超时，确保即使测试卡住也能结束
           timeout_seconds=120
 
-          # 运行前端测试
+          # 运行前端测试（使用pnpm）
           echo "📋 Running frontend tests..."
-          timeout $timeout_seconds npx jest test/frontend_test.js --passWithNoTests --forceExit
+          timeout $timeout_seconds pnpm run test:frontend
           TEST_EXIT_CODE=$?
 
           if [ $TEST_EXIT_CODE -ne 0 ]; then
             echo "⚠️ First test run failed with code $TEST_EXIT_CODE, retrying..."
             sleep 5
-            timeout $timeout_seconds npx jest test/frontend_test.js --passWithNoTests --forceExit
+            timeout $timeout_seconds pnpm run test:frontend
             TEST_EXIT_CODE=$?
           fi
 

@@ -1,13 +1,13 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	handler "tailwind-converter/api"
@@ -15,7 +15,8 @@ import (
 
 func main() {
 	// Define command line parameters
-	port := 8080
+	port := flag.Int("port", 0, "Port number (default: 0 for auto-selection)")
+	flag.Parse()
 
 	// Create a new router
 	mux := http.NewServeMux()
@@ -26,29 +27,15 @@ func main() {
 	// Register API handlers
 	mux.HandleFunc("/convert", handler.Handler)
 
-	// Serve static files (for assets referenced by index.html)
-	staticHandler := http.FileServer(http.Dir("static"))
-	mux.Handle("/static/", http.StripPrefix("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Set proper content types based on file extensions
-		if strings.HasSuffix(r.URL.Path, ".js") {
-			w.Header().Set("Content-Type", "application/javascript")
-		} else if strings.HasSuffix(r.URL.Path, ".css") {
-			w.Header().Set("Content-Type", "text/css")
-		}
-		staticHandler.ServeHTTP(w, r)
-	})))
-
-	// Also serve script.js and other root assets directly
-	mux.HandleFunc("/script.js", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/javascript")
-		http.ServeFile(w, r, "static/script.js")
-	})
-
-	// Handle root path last
+	// Handle root path and serve static files
 	mux.HandleFunc("/", handler.Index)
 
+	// Serve static files (for assets referenced by index.html)
+	staticHandler := http.FileServer(http.Dir("static"))
+	mux.Handle("/static/", http.StripPrefix("/static/", staticHandler))
+
 	// Configure the HTTP server
-	addr := fmt.Sprintf(":%d", port)
+	addr := fmt.Sprintf(":%d", *port)
 	server := &http.Server{
 		Addr:         addr,
 		Handler:      mux,
@@ -64,7 +51,7 @@ func main() {
 	}
 
 	actualPort := listener.Addr().(*net.TCPAddr).Port
-	log.Printf("Starting server on http://localhost:%d", actualPort)
+	log.Printf("Starting server on :%d", actualPort)
 	log.Fatal(server.Serve(listener))
 }
 

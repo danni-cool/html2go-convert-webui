@@ -1,0 +1,11 @@
+APP_NAME: HTML2GoConverter
+APP_ENV: dev
+APP_URL: http://localhost
+APP_PORT: 8080
+APP_PPROF: false
+HTTPS: 0
+ADDRESS_LIMIT: true
+LOG_MYSQL_DEBUG: false
+LOG_MYSQL_ERROR: false
+LOG_MYSQL_WARN: false
+NOTIFY_EMAIL: ''

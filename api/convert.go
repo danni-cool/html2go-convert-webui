@@ -60,14 +60,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set default prefixes if not provided
-	if req.VuetifyPrefix == "" {
-		req.VuetifyPrefix = "v"
-	}
-	if req.VuetifyXPrefix == "" {
-		req.VuetifyXPrefix = "vx"
-	}
-
 	// Process based on direction
 	var response ConversionResponse
 	switch req.Direction {

@@ -1,8 +1,60 @@
-# HTML to Go Converter
+# HTML2Go Converter WebUI
 
-A web-based tool to convert HTML/Vuetify/VuetifyX components to Go code.
+A web interface for the HTML2Go converter, which converts HTML to Go code.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdanni-cool%2Fhtmlgo-convert-webui&project-name=htmlgo-converter&description=HTML%20to%20Go%20code%20converter%20with%20Vuetify%20support)
+## Getting Started
+
+You can run the server locally using the provided script:
+
+```bash
+./start.sh
+```
+
+This will:
+
+1. Create a static directory from the public directory if it doesn't exist
+2. Start the server on an auto-selected port
+
+If you want to specify a port, you can use:
+
+```bash
+./start.sh -port=8080
+```
+
+## Structure
+
+- `api/` - Contains the API handlers for conversion
+  - `convert.go` - The HTML to Go conversion API
+  - `index.go` - Serves the main index.html file
+- `cmd/server/` - Contains the main entry point for the server
+  - `main.go` - Server implementation
+- `public/` - Original static files
+- `static/` - Copied static files served by the server
+
+## API
+
+The primary API endpoint is `/convert`, which accepts POST requests with JSON payloads.
+
+Example request:
+
+```json
+{
+  "html": "<div class=\"container\"><h1>Hello World</h1></div>",
+  "packagePrefix": "h",
+  "vuetifyPrefix": "v",
+  "vuetifyXPrefix": "vx",
+  "direction": "html2go",
+  "childrenMode": false
+}
+```
+
+Example response:
+
+```json
+{
+  "code": "h.Div(\n\tClass(\"container\"),\n\th.H1(\"Hello World\"),\n)"
+}
+```
 
 ## Features
 
@@ -11,59 +63,48 @@ A web-based tool to convert HTML/Vuetify/VuetifyX components to Go code.
 - Customizable prefixes
 - Clean and responsive UI
 
-## Local Development
-
-1. Clone this repository
-2. Install dependencies:
-   ```
-   go mod tidy
-   npm install
-   ```
-3. Start the server:
-   ```
-   go run main.go -port=8080
-   ```
-4. Open your browser and navigate to `http://localhost:8080`
-
 ## Vercel Deployment
 
-This project is configured to be deployed on Vercel. You can deploy it with a single click using the "Deploy with Vercel" button at the top of this README.
+This project is set up to be deployed on Vercel with Golang serverless functions.
 
-Alternatively, follow these steps to deploy your own instance:
+### Local Development
 
-1. Install Vercel CLI:
+1. Clone the repository
+2. Set up the environment:
+   ```
+   # Create a local .env file
+   cp .env.example .env
+   ```
+3. Run the development server:
 
    ```
-   npm install -g vercel
+   # Using Go directly
+   go run main.go
+
+   # Or using Vercel CLI
+   pnpm i -g vercel
+   vercel dev
    ```
 
-2. Login to Vercel:
+### Production Deployment
 
-   ```
-   vercel login
-   ```
-
-3. Configure your environment:
-
-   - Create a `.env.local` file with your configuration
-   - No special configuration is required for basic usage
-
-4. Test locally using Vercel Dev:
-
-   ```
-   npm run dev
-   ```
-
-5. Deploy to Vercel:
-   ```
-   npm run deploy
-   ```
-
-## Structure
-
-- `/api`: Serverless functions for Vercel deployment
-- `/static`: Frontend files (HTML, CSS, JavaScript)
-- `/test`: Test suites
+1. Push your changes to GitHub
+2. Connect your GitHub repository to Vercel
+3. Configure the Environment Variables in Vercel:
+   - `TLS`: Set to `false`
+   - `CONFIG`: Set to your desired JSON configuration. Example:
+     ```json
+     {
+       "APP_NAME": "HTML2GoConverter",
+       "APP_ENV": "production",
+       "APP_URL": "https://your-vercel-domain.vercel.app",
+       "APP_PORT": 8080,
+       "APP_PPROF": false,
+       "HTTPS": 0,
+       "ADDRESS_LIMIT": true
+     }
+     ```
+4. Deploy your application
 
 ## License
 

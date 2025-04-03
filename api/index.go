@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 )
 
-// IndexHandler function for serving the index.html file
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
+// Index function for serving the index.html file
+func Index(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")

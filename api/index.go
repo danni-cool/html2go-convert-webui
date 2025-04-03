@@ -28,6 +28,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 	// Define possible public directory paths
 	possiblePaths := []string{
+		"/public",
 		"./public",
 		"../public",
 		"/var/task/public",

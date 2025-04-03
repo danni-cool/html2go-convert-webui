@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	pathfinder "html2go-converter/api/_utils"
+	pathfinder "html2go-converter/api_utils"
 )
 
 // TestFindPublicDir 测试查找public目录的功能

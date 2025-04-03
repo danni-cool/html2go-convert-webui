@@ -1,11 +1,18 @@
-package pathfinder
+package api_utils
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+func Handler(w http.ResponseWriter, r *http.Request) {
+	// 在此处理请求
+	fmt.Fprintf(w, "Hello from pathfinder!")
+}
 
 // isVercelEnvironment 检查是否在Vercel环境中运行
 func isVercelEnvironment() bool {

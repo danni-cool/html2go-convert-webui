@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	pathfinder "html2go-converter/api/_utils"
+	"html2go-converter/api_utils"
 )
 
 // Index function for serving the index.html file
@@ -28,8 +28,8 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 使用pathfinder包查找index.html
-	indexPath, found := pathfinder.GetPublicIndexPath()
+	// 使用api_utils包查找index.html
+	indexPath, found := api_utils.GetPublicIndexPath()
 
 	// 如果没有找到有效路径
 	if !found {

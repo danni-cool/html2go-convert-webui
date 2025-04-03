@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	pathfinder "html2go-converter/api/_utils"
+	pathfinder "html2go-converter/api_utils"
 )
 
 // TestVercelEnvironment 模拟Vercel环境下的测试

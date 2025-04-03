@@ -4,12 +4,13 @@
     { "src": "api/**/*.go", "use": "@vercel/go" },
     { "src": "public/**/*", "use": "@vercel/static" }
   ],
-  "routes": [
-    { "src": "/convert", "dest": "/api/convert.go" },
-    { "src": "/", "dest": "/api/index.go" },
-    { "src": "/script.js", "dest": "/public/script.js" },
-    { "src": "/demo.html", "dest": "/public/demo.html" },
-    { "src": "/static/(.*)", "dest": "/public/$1" },
-    { "src": "/(.*)", "dest": "/public/$1" }
-  ]
+  "rewrites": [
+    { "source": "/convert", "destination": "/api/convert.go" },
+    { "source": "/", "destination": "/api/index.go" },
+    { "source": "/script.js", "destination": "/public/script.js" },
+    { "source": "/demo.html", "destination": "/public/demo.html" },
+    { "source": "/static/:path*", "destination": "/public/:path*" },
+    { "source": "/:path*", "destination": "/public/:path*" }
+  ],
+  "outputDirectory": "public"
 }

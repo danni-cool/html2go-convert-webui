@@ -2,12 +2,13 @@
   "name": "htmlgo-convert-webui",
   "version": "1.0.0",
   "description": "HTML to Go converter web UI",
-  "main": "public/script.js",
+  "main": "index.js",
   "scripts": {
     "test": "jest --forceExit",
     "test:frontend": "jest test/frontend_test.js --passWithNoTests --forceExit",
     "dev": "vercel dev",
     "build": "./build.sh",
+    "start": "node index.js",
     "deploy": "vercel deploy --prod"
   },
   "devDependencies": {

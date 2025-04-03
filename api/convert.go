@@ -134,7 +134,7 @@ func stripWrappers(code string) string {
 		}
 	}
 
-	// 移除 var n = 声明
+	// 移除 var n = 声明 (包括直接的 Body() 情况)
 	if strings.Contains(code, "var n =") {
 		// 移除var n =行
 		lines := strings.Split(code, "\n")
@@ -142,10 +142,10 @@ func stripWrappers(code string) string {
 		for i, line := range lines {
 			if strings.Contains(line, "var n =") {
 				startLine = i + 1
-				// 如果这行不包含h.Body，可能h.Body在下一行
-				if !strings.Contains(line, "h.Body(") {
+				// 如果这行不包含h.Body或Body，可能在下一行
+				if !strings.Contains(line, "h.Body(") && !strings.Contains(line, "Body(") {
 					for j := startLine; j < len(lines); j++ {
-						if strings.Contains(lines[j], "h.Body(") {
+						if strings.Contains(lines[j], "h.Body(") || strings.Contains(lines[j], "Body(") {
 							startLine = j + 1
 							break
 						}
@@ -161,11 +161,38 @@ func stripWrappers(code string) string {
 		}
 	}
 
-	// 尝试定位并提取h.Body的内容
+	// 尝试定位并提取h.Body或Body的内容
 	bodyStart := strings.Index(code, "h.Body(")
-	if bodyStart >= 0 {
+	if bodyStart < 0 {
+		bodyStart = strings.Index(code, "Body(")
+		if bodyStart >= 0 {
+			// 找到第一个左括号后的内容
+			openingIndex := bodyStart + 5 // "Body("的长度是5
+			// 找到匹配的最后一个闭合括号
+			depth := 1
+			closingIndex := -1
+
+			for i := openingIndex; i < len(code); i++ {
+				if code[i] == '(' {
+					depth++
+				} else if code[i] == ')' {
+					depth--
+					if depth == 0 {
+						closingIndex = i
+						break
+					}
+				}
+			}
+
+			if closingIndex > openingIndex {
+				// 提取 Body(...) 内部的内容
+				innerCode := code[openingIndex:closingIndex]
+				code = innerCode
+			}
+		}
+	} else {
 		// 找到第一个左括号后的内容
-		openingIndex := bodyStart + 7
+		openingIndex := bodyStart + 7 // "h.Body("的长度是7
 		// 找到匹配的最后一个闭合括号
 		depth := 1
 		closingIndex := -1

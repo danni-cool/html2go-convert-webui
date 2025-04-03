@@ -6,8 +6,6 @@
   "scripts": {
     "test": "jest --forceExit",
     "test:frontend": "jest test/frontend_test.js --passWithNoTests --forceExit",
-    "test:prefix": "jest test/unit/prefix_test.js --forceExit",
-    "predev": "",
     "dev": "vercel dev",
     "build": "./build.sh",
     "deploy": "vercel deploy --prod"

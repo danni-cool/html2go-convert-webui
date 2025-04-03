@@ -1,11 +1,25 @@
 package pathfinder
 
 import (
+	"encoding/json"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+// Handler Vercel需要的HTTP处理函数
+func Handler(w http.ResponseWriter, r *http.Request) {
+	// 返回pathfinder功能的信息或状态
+	result := map[string]interface{}{
+		"status":  "ok",
+		"message": "Pathfinder utility is working",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
 
 // isVercelEnvironment 检查是否在Vercel环境中运行
 func isVercelEnvironment() bool {

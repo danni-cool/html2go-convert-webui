@@ -5,8 +5,9 @@
     { "src": "public/**/*", "use": "@vercel/static" }
   ],
   "rewrites": [
-    { "source": "/static/:path*", "destination": "/public/:path*" },
     { "source": "/convert", "destination": "/api/convert.go" },
-    { "source": "/", "destination": "/api/index.go" }
+    { "source": "/", "destination": "/api/index.go" },
+    { "source": "/static/:path*", "destination": "/public/:path*" },
+    { "source": "/:path*", "destination": "/public/:path*" }
   ]
 }

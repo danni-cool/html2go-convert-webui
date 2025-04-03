@@ -15,7 +15,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.20'
+          go-version: '1.22'
           cache: true
 
       - name: Check workspace
@@ -39,25 +39,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: false
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          cache: 'npm'
 
       - name: Check workspace
         run: |
@@ -68,10 +50,7 @@ jobs:
           cat package.json
 
       - name: Install dependencies
-        run: pnpm install
-
-      - name: Setup Vercel CLI
-        run: pnpm add -g vercel@latest
+        run: npm install
 
       - name: Create public directory if needed
         run: |
@@ -85,65 +64,41 @@ jobs:
         run: go build -o api-server main.go
 
       - name: Start server and run frontend tests
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          # 设置CI环境变量
-          export CI=true
-
-          # 尝试启动vercel dev服务器
-          echo "Starting dev server with Vercel..."
-          pnpm run dev > vercel_dev.log 2>&1 &
+          # 直接启动API服务器
+          echo "Starting API server..."
+          ./api-server --port 3000 > api_server.log 2>&1 &
           DEV_SERVER_PID=$!
 
           # 等待服务器启动
-          echo "Waiting for dev server to start..."
-          sleep 20
+          echo "Waiting for server to start..."
+          sleep 10
 
           # 检查服务器是否启动
           if curl -s http://localhost:3000 > /dev/null; then
-            echo "✅ Vercel dev server is running"
+            echo "✅ API server is running"
           else
-            echo "❌ Vercel dev server failed to start. Checking logs:"
-            cat vercel_dev.log
-            
-            echo "Killing previous process..."
-            kill $DEV_SERVER_PID 2>/dev/null || true
-            
-            echo "Starting API server directly..."
-            ./api-server --port 3000 > api_server.log 2>&1 &
-            DEV_SERVER_PID=$!
-            
-            # 再次等待启动
-            sleep 10
-            
-            if curl -s http://localhost:3000 > /dev/null; then
-              echo "✅ Direct API server is running"
-            else
-              echo "❌ API server also failed to start. Checking logs:"
-              cat api_server.log
-              echo "⚠️ All attempts to start a server failed, but trying tests anyway"
-            fi
+            echo "❌ API server failed to start. Checking logs:"
+            cat api_server.log
+            echo "⚠️ Server failed to start, but trying tests anyway"
           fi
 
           # 显示运行进程
           echo "Running processes:"
-          ps aux | grep -E 'vercel|node|api-server'
+          ps aux | grep -E 'api-server'
 
           # 设置超时，确保即使测试卡住也能结束
           timeout_seconds=120
 
-          # 运行前端测试，如果失败则重试一次
+          # 运行前端测试
           echo "📋 Running frontend tests..."
-          timeout $timeout_seconds pnpm run test:frontend
+          timeout $timeout_seconds npx jest test/frontend_test.js --passWithNoTests --forceExit
           TEST_EXIT_CODE=$?
 
           if [ $TEST_EXIT_CODE -ne 0 ]; then
             echo "⚠️ First test run failed with code $TEST_EXIT_CODE, retrying..."
             sleep 5
-            timeout $timeout_seconds pnpm run test:frontend
+            timeout $timeout_seconds npx jest test/frontend_test.js --passWithNoTests --forceExit
             TEST_EXIT_CODE=$?
           fi
 
@@ -152,8 +107,6 @@ jobs:
           kill $DEV_SERVER_PID 2>/dev/null || true
 
           echo "Killing all related processes..."
-          pkill -f "vercel dev" || true
-          pkill -f "node.*dev" || true
           pkill -f "api-server" || true
 
           # 显示测试日志

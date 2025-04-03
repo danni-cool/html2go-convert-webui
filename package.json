@@ -16,5 +16,8 @@
   },
   "engines": {
     "node": ">=14.x"
+  },
+  "dependencies": {
+    "jest": "^29.7.0"
   }
 }

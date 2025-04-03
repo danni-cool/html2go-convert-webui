@@ -8,9 +8,9 @@
     { "source": "/convert", "destination": "/api/convert.go" },
     { "source": "/", "destination": "/api/index.go" },
     { "source": "/script.js", "destination": "/public/script.js" },
-    { "source": "/demo.html", "destination": "/public/demo.html" },
     { "source": "/static/:path*", "destination": "/public/:path*" },
     { "source": "/:path*", "destination": "/public/:path*" }
   ],
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "public": true
 }

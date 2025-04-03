@@ -1,4 +1,4 @@
-module tailwind-converter
+module html2go-converter
 
 go 1.22.5
 

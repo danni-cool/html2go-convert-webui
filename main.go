@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	handler "tailwind-converter/api"
+	handler "html2go-converter/api"
 )
 
 func main() {

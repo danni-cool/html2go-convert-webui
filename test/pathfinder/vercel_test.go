@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"tailwind-converter/api/pathfinder"
+	pathfinder "html2go-converter/api/_utils"
 )
 
 // TestVercelEnvironment 模拟Vercel环境下的测试

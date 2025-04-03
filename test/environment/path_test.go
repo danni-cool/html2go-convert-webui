@@ -38,6 +38,16 @@ func TestFindPublicPath(t *testing.T) {
 				if err != nil {
 					return err
 				}
+				// 创建public目录和index.html文件
+				err = os.MkdirAll("temp_test/public", 0o755)
+				if err != nil {
+					return err
+				}
+				// 创建index.html
+				err = os.WriteFile("temp_test/public/index.html", []byte("<html></html>"), 0o644)
+				if err != nil {
+					return err
+				}
 				return os.Chdir("temp_test/api")
 			},
 			expectedResult: true,
@@ -48,6 +58,16 @@ func TestFindPublicPath(t *testing.T) {
 				// 创建模拟Vercel环境的目录结构
 				// 在临时目录中创建类似Vercel部署的结构
 				err := os.MkdirAll("temp_test/vercel/api", 0o755)
+				if err != nil {
+					return err
+				}
+				// 创建public目录和index.html文件
+				err = os.MkdirAll("temp_test/vercel/public", 0o755)
+				if err != nil {
+					return err
+				}
+				// 创建index.html
+				err = os.WriteFile("temp_test/vercel/public/index.html", []byte("<html></html>"), 0o644)
 				if err != nil {
 					return err
 				}

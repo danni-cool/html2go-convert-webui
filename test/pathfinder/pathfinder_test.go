@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"tailwind-converter/api/pathfinder"
+	pathfinder "html2go-converter/api/_utils"
 )
 
 // TestFindPublicDir 测试查找public目录的功能

@@ -1,13 +1,12 @@
 package handler
 
 import (
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 
-	"tailwind-converter/api/pathfinder"
+	pathfinder "html2go-converter/api/_utils"
 )
 
 // Index function for serving the index.html file
@@ -56,7 +55,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 读取 index.html 文件
-	content, err := ioutil.ReadFile(indexPath)
+	content, err := os.ReadFile(indexPath)
 	if err != nil {
 		log.Printf("Error reading index.html at %s: %v", indexPath, err)
 		http.Error(w, "Unable to read index file", http.StatusInternalServerError)

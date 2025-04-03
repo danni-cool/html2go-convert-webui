@@ -26,15 +26,28 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Log the current directory for debugging
+	cwd, _ := os.Getwd()
+	log.Printf("Current working directory: %s", cwd)
+
+	// Check if running in Vercel environment
+	inVercel := os.Getenv("VERCEL") != ""
+	log.Printf("Running in Vercel environment: %v", inVercel)
+
 	// Define possible public directory paths
 	possiblePaths := []string{
+		"/var/task/public",
+		filepath.Join(cwd, "public"),
+		filepath.Join(cwd, "../public"),
 		"/public",
 		"./public",
 		"../public",
-		"/var/task/public",
 		"/home/site/public",
 		"/vercel/path0/public",
 	}
+
+	// Add more debug info
+	log.Printf("Checking the following paths for index.html: %v", possiblePaths)
 
 	// Find index.html in one of the possible public directories
 	var indexPath string
@@ -42,11 +55,14 @@ func Index(w http.ResponseWriter, r *http.Request) {
 
 	for _, dir := range possiblePaths {
 		path := filepath.Join(dir, "index.html")
-		if _, err := os.Stat(path); err == nil {
+		_, err := os.Stat(path)
+		if err == nil {
 			indexPath = path
 			found = true
 			log.Printf("Found index.html at: %s", path)
 			break
+		} else {
+			log.Printf("Could not find index.html at %s: %v", path, err)
 		}
 	}
 
@@ -61,20 +77,30 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		parentFiles, _ := filepath.Glob("../*")
 		log.Printf("Files in parent directory: %v", parentFiles)
 
-		// In Vercel environment, we know the structure better
-		if _, exists := os.LookupEnv("VERCEL"); exists {
-			// Try the hardcoded Vercel public path
-			indexPath = "/var/task/public/index.html"
-			if _, err := os.Stat(indexPath); err == nil {
-				found = true
-				log.Printf("Found index.html in Vercel path: %s", indexPath)
+		// Try to list the contents of /var/task directly
+		if taskFiles, err := os.ReadDir("/var/task"); err == nil {
+			log.Printf("Files in /var/task directory:")
+			for _, file := range taskFiles {
+				log.Printf("- %s (is dir: %v)", file.Name(), file.IsDir())
 			}
 		}
 
-		if !found {
-			http.Error(w, "Unable to find static files. Please ensure public directory exists.", http.StatusInternalServerError)
-			return
+		// Check if the public directory exists in /var/task
+		if publicInfo, err := os.Stat("/var/task/public"); err == nil {
+			log.Printf("/var/task/public exists, is directory: %v", publicInfo.IsDir())
+			// List contents of /var/task/public
+			if publicFiles, err := os.ReadDir("/var/task/public"); err == nil {
+				log.Printf("Files in /var/task/public directory:")
+				for _, file := range publicFiles {
+					log.Printf("- %s (is dir: %v)", file.Name(), file.IsDir())
+				}
+			}
+		} else {
+			log.Printf("Error accessing /var/task/public: %v", err)
 		}
+
+		http.Error(w, "Unable to find static files. Please ensure public directory exists.", http.StatusInternalServerError)
+		return
 	}
 
 	// Read the index.html file

@@ -1,13 +1,15 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "api/**/*.go",
-      "use": "@vercel/go"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
-    }
+    { "src": "api/**/*.go", "use": "@vercel/go" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/convert", "dest": "/api/convert.go" },
+    { "src": "/", "dest": "/api/index.go" },
+    { "src": "/script.js", "dest": "/public/script.js" },
+    { "src": "/demo.html", "dest": "/public/demo.html" },
+    { "src": "/static/(.*)", "dest": "/public/$1" },
+    { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }

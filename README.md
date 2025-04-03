@@ -63,48 +63,82 @@ Example response:
 - Customizable prefixes
 - Clean and responsive UI
 
-## Vercel Deployment
+## Deploying to Vercel
 
-This project is set up to be deployed on Vercel with Golang serverless functions.
+This project has been configured to deploy on Vercel with Go serverless functions for the backend and static files for the frontend.
 
-### Local Development
+### Configuration Details
 
-1. Clone the repository
-2. Set up the environment:
+1. The project uses:
+
+   - **Go Serverless Functions**: Located in `api/` directory
+   - **Static Frontend**: Located in `public/` directory
+
+2. The `vercel.json` configuration includes:
+   ```json
+   {
+     "version": 2,
+     "builds": [
+       {
+         "src": "api/**/*.go",
+         "use": "@vercel/go"
+       },
+       {
+         "src": "public/**",
+         "use": "@vercel/static"
+       }
+     ],
+     "routes": [
+       {
+         "src": "/convert",
+         "dest": "/api/convert.go"
+       },
+       {
+         "src": "/",
+         "dest": "/api/index.go"
+       },
+       {
+         "src": "/script.js",
+         "dest": "/public/script.js"
+       },
+       {
+         "src": "/demo.html",
+         "dest": "/public/demo.html"
+       },
+       {
+         "src": "/(.*)",
+         "dest": "/public/$1"
+       }
+     ]
+   }
    ```
-   # Create a local .env file
-   cp .env.example .env
-   ```
-3. Run the development server:
+
+### Deployment Steps
+
+1. Install the Vercel CLI:
 
    ```
-   # Using Go directly
-   go run main.go
-
-   # Or using Vercel CLI
-   pnpm i -g vercel
-   vercel dev
+   npm install -g vercel
    ```
 
-### Production Deployment
+2. Login to Vercel:
 
-1. Push your changes to GitHub
-2. Connect your GitHub repository to Vercel
-3. Configure the Environment Variables in Vercel:
-   - `TLS`: Set to `false`
-   - `CONFIG`: Set to your desired JSON configuration. Example:
-     ```json
-     {
-       "APP_NAME": "HTML2GoConverter",
-       "APP_ENV": "production",
-       "APP_URL": "https://your-vercel-domain.vercel.app",
-       "APP_PORT": 8080,
-       "APP_PPROF": false,
-       "HTTPS": 0,
-       "ADDRESS_LIMIT": true
-     }
-     ```
-4. Deploy your application
+   ```
+   vercel login
+   ```
+
+3. Deploy the project:
+   ```
+   vercel
+   ```
+4. Deploy to production:
+   ```
+   vercel --prod
+   ```
+
+### Troubleshooting
+
+If you encounter issues with the index.html file not being found, make sure the `api/index.go` handler includes the correct paths to search for the file in both `public/` and `static/` directories.
 
 ## License
 

@@ -1,9 +1,8 @@
-package handler
+package api
 
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
@@ -27,22 +26,11 @@ type ConversionResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
-// Handler - Vercel serverless function handler
+// Handler is the API entry point for Vercel serverless functions
 func Handler(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers for all responses
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	// Handle preflight requests
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
 	// Only allow POST requests
 	if r.Method != http.MethodPost {
-		sendJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -58,6 +46,14 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	if req.HTML == "" {
 		sendJSONError(w, "HTML content is required", http.StatusBadRequest)
 		return
+	}
+
+	// Set default prefixes if not provided
+	if req.VuetifyPrefix == "" {
+		req.VuetifyPrefix = "v"
+	}
+	if req.VuetifyXPrefix == "" {
+		req.VuetifyXPrefix = "vx"
 	}
 
 	// Process based on direction
@@ -83,7 +79,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding response: %v", err)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 	}
 }
 
@@ -95,17 +91,8 @@ func convertHTMLToGo(htmlContent, packagePrefix, vuetifyPrefix, vuetifyXPrefix s
 	// Generate HTML Go code with support for Vuetify components
 	goCode := parse.GenerateHTMLGo(packagePrefix, vuetifyPrefix, vuetifyXPrefix, childrenMode, reader)
 
-	// Post-process the generated code to remove wrappers and trim whitespace
+	// Process the generated code to extract important parts
 	goCode = stripWrappers(goCode)
-
-	// Validate the generated code syntax
-	if err := validateGoSyntax(goCode); err != nil {
-		// If we can't validate the syntax, just return the code without error
-		// This is because the parser might not understand some valid Go constructs
-		// in the generated code
-		log.Printf("Warning: Syntax validation failed, but returning code anyway: %v", err)
-		return goCode, nil
-	}
 
 	return goCode, nil
 }
@@ -134,7 +121,7 @@ func stripWrappers(code string) string {
 		}
 	}
 
-	// 移除 var n = 声明 (包括直接的 Body() 情况)
+	// 移除 var n = 声明
 	if strings.Contains(code, "var n =") {
 		// 移除var n =行
 		lines := strings.Split(code, "\n")
@@ -142,10 +129,10 @@ func stripWrappers(code string) string {
 		for i, line := range lines {
 			if strings.Contains(line, "var n =") {
 				startLine = i + 1
-				// 如果这行不包含h.Body或Body，可能在下一行
-				if !strings.Contains(line, "h.Body(") && !strings.Contains(line, "Body(") {
+				// 如果这行不包含h.Body，可能h.Body在下一行
+				if !strings.Contains(line, "h.Body(") {
 					for j := startLine; j < len(lines); j++ {
-						if strings.Contains(lines[j], "h.Body(") || strings.Contains(lines[j], "Body(") {
+						if strings.Contains(lines[j], "h.Body(") {
 							startLine = j + 1
 							break
 						}
@@ -161,38 +148,11 @@ func stripWrappers(code string) string {
 		}
 	}
 
-	// 尝试定位并提取h.Body或Body的内容
+	// 尝试定位并提取h.Body的内容
 	bodyStart := strings.Index(code, "h.Body(")
-	if bodyStart < 0 {
-		bodyStart = strings.Index(code, "Body(")
-		if bodyStart >= 0 {
-			// 找到第一个左括号后的内容
-			openingIndex := bodyStart + 5 // "Body("的长度是5
-			// 找到匹配的最后一个闭合括号
-			depth := 1
-			closingIndex := -1
-
-			for i := openingIndex; i < len(code); i++ {
-				if code[i] == '(' {
-					depth++
-				} else if code[i] == ')' {
-					depth--
-					if depth == 0 {
-						closingIndex = i
-						break
-					}
-				}
-			}
-
-			if closingIndex > openingIndex {
-				// 提取 Body(...) 内部的内容
-				innerCode := code[openingIndex:closingIndex]
-				code = innerCode
-			}
-		}
-	} else {
+	if bodyStart >= 0 {
 		// 找到第一个左括号后的内容
-		openingIndex := bodyStart + 7 // "h.Body("的长度是7
+		openingIndex := bodyStart + 7
 		// 找到匹配的最后一个闭合括号
 		depth := 1
 		closingIndex := -1
@@ -273,24 +233,6 @@ func removeTrailingCommas(s string) string {
 	return s
 }
 
-// validateGoSyntax validates the syntax of the generated Go code
-func validateGoSyntax(code string) error {
-	// 检查括号是否平衡
-	openParens := strings.Count(code, "(")
-	closeParens := strings.Count(code, ")")
-	if openParens != closeParens {
-		return fmt.Errorf("unbalanced parentheses: %d opening vs %d closing", openParens, closeParens)
-	}
-
-	openBraces := strings.Count(code, "{")
-	closeBraces := strings.Count(code, "}")
-	if openBraces != closeBraces {
-		return fmt.Errorf("unbalanced braces: %d opening vs %d closing", openBraces, closeBraces)
-	}
-
-	return nil
-}
-
 func sendJSONError(w http.ResponseWriter, errMsg string, statusCode int) {
 	response := ConversionResponse{
 		Error: errMsg,
@@ -300,7 +242,6 @@ func sendJSONError(w http.ResponseWriter, errMsg string, statusCode int) {
 	w.WriteHeader(statusCode)
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding error response: %v", err)
 		http.Error(w, errMsg, statusCode)
 	}
 }

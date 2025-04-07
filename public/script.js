@@ -307,7 +307,7 @@ async function htmlToGoConversion() {
     console.log("发送转换请求:", JSON.stringify(requestBody));
 
     // 发送转换请求，使用getApiUrl获取正确的URL
-    const response = await fetch(getApiUrl('/convert'), {
+    const response = await fetch(getApiUrl('/api/convert'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -452,7 +452,7 @@ function goToHtmlConversion() {
 
   console.log("发送请求:", JSON.stringify(requestBody));
 
-  fetch(getApiUrl('/convert'), {
+  fetch(getApiUrl('/api/convert'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1001,7 +1001,7 @@ function testPrefixes() {
   };
 
   // 在开发环境中测试前缀
-  fetch('/convert', {
+  fetch(getApiUrl('/api/convert'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(requestBody)

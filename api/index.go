@@ -1,13 +1,14 @@
-package handler
+package api
 
 import (
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-// Index function for serving the index.html file
+// Index function for serving static files or redirecting to index.html
 func Index(w http.ResponseWriter, r *http.Request) {
 	// Set CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -26,93 +27,134 @@ func Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Log the current directory for debugging
-	cwd, _ := os.Getwd()
-	log.Printf("Current working directory: %s", cwd)
+	// Log the request path
+	log.Printf("Handling request for path: %s", r.URL.Path)
 
-	// Check if running in Vercel environment
-	inVercel := os.Getenv("VERCEL") != ""
-	log.Printf("Running in Vercel environment: %v", inVercel)
-
-	// Define possible public directory paths
-	possiblePaths := []string{
-		"/var/task/public",
-		filepath.Join(cwd, "public"),
-		filepath.Join(cwd, "../public"),
-		"/public",
-		"./public",
-		"../public",
-		"/home/site/public",
-		"/vercel/path0/public",
+	// If the request is for root, serve index.html
+	if r.URL.Path == "/" {
+		serveIndexHTML(w, r)
+		return
 	}
 
-	// Add more debug info
-	log.Printf("Checking the following paths for index.html: %v", possiblePaths)
+	// Check if this is a request for a static file
+	if isStaticFileRequest(r.URL.Path) {
+		serveStaticFile(w, r)
+		return
+	}
 
-	// Find index.html in one of the possible public directories
-	var indexPath string
-	var found bool
+	// Default to serving index.html for all other paths
+	serveIndexHTML(w, r)
+}
 
-	for _, dir := range possiblePaths {
-		path := filepath.Join(dir, "index.html")
-		_, err := os.Stat(path)
-		if err == nil {
-			indexPath = path
-			found = true
-			log.Printf("Found index.html at: %s", path)
-			break
-		} else {
-			log.Printf("Could not find index.html at %s: %v", path, err)
+// isStaticFileRequest checks if the request is for a static file
+func isStaticFileRequest(path string) bool {
+	extensions := []string{".js", ".css", ".png", ".jpg", ".gif", ".svg", ".ico", ".html"}
+	for _, ext := range extensions {
+		if strings.HasSuffix(path, ext) {
+			return true
 		}
 	}
+	return false
+}
 
-	// If not found in predefined paths, try to find it in the current directory structure
-	if !found {
-		log.Printf("Error: Could not find index.html in expected locations")
+// serveStaticFile serves a static file from the public directory
+func serveStaticFile(w http.ResponseWriter, r *http.Request) {
+	// Get the file path from the URL
+	filePath := r.URL.Path
 
-		// Log directory contents for debugging
-		files, _ := filepath.Glob("*")
-		log.Printf("Files in current directory: %v", files)
+	// If the path starts with /static/, remove it
+	if strings.HasPrefix(filePath, "/static/") {
+		filePath = strings.TrimPrefix(filePath, "/static/")
+	}
 
-		parentFiles, _ := filepath.Glob("../*")
-		log.Printf("Files in parent directory: %v", parentFiles)
+	// Construct the full path to the file in the public directory
+	fullPath := filepath.Join("public", filePath)
 
-		// Try to list the contents of /var/task directly
-		if taskFiles, err := os.ReadDir("/var/task"); err == nil {
-			log.Printf("Files in /var/task directory:")
-			for _, file := range taskFiles {
-				log.Printf("- %s (is dir: %v)", file.Name(), file.IsDir())
+	// Log the file path
+	log.Printf("Attempting to serve static file: %s", fullPath)
+
+	// Check if the file exists
+	_, err := os.Stat(fullPath)
+	if os.IsNotExist(err) {
+		// Try alternative paths in Vercel environment
+		if os.Getenv("VERCEL") != "" {
+			alternatives := []string{
+				filepath.Join("/var/task/public", filePath),
+				filepath.Join("/public", filePath),
 			}
-		}
 
-		// Check if the public directory exists in /var/task
-		if publicInfo, err := os.Stat("/var/task/public"); err == nil {
-			log.Printf("/var/task/public exists, is directory: %v", publicInfo.IsDir())
-			// List contents of /var/task/public
-			if publicFiles, err := os.ReadDir("/var/task/public"); err == nil {
-				log.Printf("Files in /var/task/public directory:")
-				for _, file := range publicFiles {
-					log.Printf("- %s (is dir: %v)", file.Name(), file.IsDir())
+			for _, alt := range alternatives {
+				if _, err := os.Stat(alt); err == nil {
+					fullPath = alt
+					log.Printf("Found file at alternative path: %s", fullPath)
+					break
 				}
 			}
-		} else {
-			log.Printf("Error accessing /var/task/public: %v", err)
 		}
+	}
 
-		http.Error(w, "Unable to find static files. Please ensure public directory exists.", http.StatusInternalServerError)
+	// Check if the file exists at the resolved path
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		log.Printf("File not found: %s", fullPath)
+		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
 
-	// Read the index.html file
-	content, err := os.ReadFile(indexPath)
-	if err != nil {
-		log.Printf("Error reading index.html at %s: %v", indexPath, err)
-		http.Error(w, "Unable to read index file", http.StatusInternalServerError)
-		return
+	// Set the appropriate content type based on file extension
+	setContentType(w, fullPath)
+
+	// Serve the file
+	http.ServeFile(w, r, fullPath)
+}
+
+// serveIndexHTML serves the index.html file
+func serveIndexHTML(w http.ResponseWriter, r *http.Request) {
+	// Define possible index.html paths
+	possiblePaths := []string{
+		"public/index.html",
+		"/var/task/public/index.html",
+		"/public/index.html",
 	}
 
-	// Set content type and serve the file
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write(content)
+	// Try to find and serve the index.html file
+	for _, path := range possiblePaths {
+		content, err := os.ReadFile(path)
+		if err == nil {
+			log.Printf("Serving index.html from: %s", path)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(http.StatusOK)
+			w.Write(content)
+			return
+		}
+	}
+
+	// If we couldn't find the index.html file, return an error
+	log.Printf("Error: Could not find index.html in any location")
+	http.Error(w, "Unable to find index.html file", http.StatusInternalServerError)
+}
+
+// setContentType sets the appropriate Content-Type header based on file extension
+func setContentType(w http.ResponseWriter, path string) {
+	ext := strings.ToLower(filepath.Ext(path))
+
+	switch ext {
+	case ".html":
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	case ".css":
+		w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	case ".js":
+		w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	case ".png":
+		w.Header().Set("Content-Type", "image/png")
+	case ".jpg", ".jpeg":
+		w.Header().Set("Content-Type", "image/jpeg")
+	case ".gif":
+		w.Header().Set("Content-Type", "image/gif")
+	case ".svg":
+		w.Header().Set("Content-Type", "image/svg+xml")
+	case ".ico":
+		w.Header().Set("Content-Type", "image/x-icon")
+	default:
+		w.Header().Set("Content-Type", "application/octet-stream")
+	}
 }

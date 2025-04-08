@@ -48,14 +48,6 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set default prefixes if not provided
-	if req.VuetifyPrefix == "" {
-		req.VuetifyPrefix = "v"
-	}
-	if req.VuetifyXPrefix == "" {
-		req.VuetifyXPrefix = "vx"
-	}
-
 	// Process based on direction
 	var response ConversionResponse
 	switch req.Direction {
@@ -93,6 +85,9 @@ func convertHTMLToGo(htmlContent, packagePrefix, vuetifyPrefix, vuetifyXPrefix s
 
 	// Process the generated code to extract important parts
 	goCode = stripWrappers(goCode)
+
+	// Always apply the RemoveBodyWrapper for all cases
+	goCode = RemoveBodyWrapper(goCode)
 
 	return goCode, nil
 }
@@ -231,6 +226,49 @@ func removeTrailingCommas(s string) string {
 	}
 
 	return s
+}
+
+// RemoveBodyWrapper removes "var n = Body(" or "var n = packagePrefix.Body(" from the beginning and ")" from the end of the code
+func RemoveBodyWrapper(code string) string {
+	// First trim any whitespace
+	code = strings.TrimSpace(code)
+
+	// Check if the code starts with "var n = Body("
+	if strings.HasPrefix(code, "var n = Body(") {
+		// Remove the prefix
+		code = code[len("var n = Body("):]
+
+		// Remove the closing parenthesis at the end if exists
+		if strings.HasSuffix(code, ")") {
+			code = code[:len(code)-1]
+		}
+
+		// Trim any whitespace again
+		code = strings.TrimSpace(code)
+	} else {
+		// Check for "var n = <packagePrefix>.Body("
+		index := strings.Index(code, "var n = ")
+		if index == 0 {
+			bodyIndex := strings.Index(code, ".Body(")
+			if bodyIndex > 0 {
+				// Get the prefix length (var n = <packagePrefix>.Body()
+				prefixLength := bodyIndex + 6 // ".Body(" is 6 characters
+
+				// Remove the prefix
+				code = code[prefixLength:]
+
+				// Remove the closing parenthesis at the end if exists
+				if strings.HasSuffix(code, ")") {
+					code = code[:len(code)-1]
+				}
+
+				// Trim any whitespace again
+				code = strings.TrimSpace(code)
+			}
+		}
+	}
+
+	return code
 }
 
 func sendJSONError(w http.ResponseWriter, errMsg string, statusCode int) {

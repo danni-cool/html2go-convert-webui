@@ -99,6 +99,11 @@ require(['vs/editor/editor.main'], function () {
     validate: false
   });
 
+  // 跟踪HTML编辑器创建
+  if (window.Analytics) {
+    window.Analytics.trackEditorCreated('html');
+  }
+
   // 创建Go编辑器
   createGoEditor();
 
@@ -192,6 +197,11 @@ function createGoEditor() {
     // 禁用语法校验
     validate: false
   });
+
+  // 跟踪Go编辑器创建
+  if (window.Analytics) {
+    window.Analytics.trackEditorCreated('go');
+  }
 
   console.log("Go编辑器已重新创建");
 
@@ -942,6 +952,11 @@ function loadExample(id) {
 // 添加编辑器内容变化监听器
 function setupEditorListeners() {
   // 不再自动转换，改为手动按钮触发
+
+  // 使用Analytics模块设置所有编辑器分析事件
+  if (window.Analytics) {
+    window.Analytics.setupEditorAnalytics(htmlEditor, goEditor);
+  }
 
   // 添加HTML到Go转换按钮事件
   const htmlToGoBtn = document.getElementById('htmlToGoBtn');

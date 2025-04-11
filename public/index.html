@@ -6,6 +6,23 @@
     <title>HTML/Go 双向转换器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+    <!-- Vercel Analytics -->
+    <script type="module" src="/script/analytics.js"></script>
+    <!-- Fallback for browsers without module support -->
+    <script>
+      if (
+        typeof window !== 'undefined' &&
+        !('noModule' in HTMLScriptElement.prototype)
+      ) {
+        const script = document.createElement('script')
+        script.src =
+          'https://unpkg.com/@vercel/analytics@1.5.0/dist/index.umd.js'
+        script.onload = function () {
+          if (window.va) window.va.inject()
+        }
+        document.head.appendChild(script)
+      }
+    </script>
     <style>
       /* 自定义滚动条样式 */
       .monaco-editor .scrollbar {

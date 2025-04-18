@@ -100,9 +100,9 @@ require(['vs/editor/editor.main'], function () {
   });
 
   // 跟踪HTML编辑器创建
-  if (window.Analytics) {
-    window.Analytics.trackEditorCreated('html');
-  }
+  // if (window.Analytics) {
+  //   window.Analytics.trackEditorCreated('html');
+  // }
 
   // 创建Go编辑器
   createGoEditor();
@@ -199,9 +199,9 @@ function createGoEditor() {
   });
 
   // 跟踪Go编辑器创建
-  if (window.Analytics) {
-    window.Analytics.trackEditorCreated('go');
-  }
+  // if (window.Analytics) {
+  //   window.Analytics.trackEditorCreated('go');
+  // }
 
   console.log("Go编辑器已重新创建");
 

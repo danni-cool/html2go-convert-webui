@@ -57,52 +57,52 @@ window.Analytics = {
   },
 
   // Track application initialization
-  trackAppInit: function () {
-    if (window.va) {
-      window.va.track('app_initialized', this.prepareEventData({
-        screen_width: window.innerWidth,
-        screen_height: window.innerHeight,
-        user_agent: navigator.userAgent,
-        language: navigator.language,
-        timestamp: new Date().toISOString()
-      }));
-    }
-  },
+  // trackAppInit: function () {
+  //   if (window.va) {
+  //     window.va.track('app_initialized', this.prepareEventData({
+  //       screen_width: window.innerWidth,
+  //       screen_height: window.innerHeight,
+  //       user_agent: navigator.userAgent,
+  //       language: navigator.language,
+  //       timestamp: new Date().toISOString()
+  //     }));
+  //   }
+  // },
 
   // Track editor creation
-  trackEditorCreated: function (type) {
-    if (window.va) {
-      window.va.track('editor_created', this.prepareEventData({ type: type }));
-    }
-  },
+  // trackEditorCreated: function (type) {
+  //   if (window.va) {
+  //     window.va.track('editor_created', this.prepareEventData({ type: type }));
+  //   }
+  // },
 
   // Track editor focus
-  trackEditorFocus: function (editorType) {
-    if (window.va) {
-      window.va.track(`focus_${editorType}_editor`, this.prepareEventData());
-    }
-  },
+  // trackEditorFocus: function (editorType) {
+  //   if (window.va) {
+  //     window.va.track(`focus_${editorType}_editor`, this.prepareEventData());
+  //   }
+  // },
 
   // Track editor content changes
-  trackEditorEdit: function (editorType, data) {
-    if (window.va) {
-      window.va.track(`edit_${editorType}`, this.prepareEventData(data));
-    }
-  },
+  // trackEditorEdit: function (editorType, data) {
+  //   if (window.va) {
+  //     window.va.track(`edit_${editorType}`, this.prepareEventData(data));
+  //   }
+  // },
 
   // Track text selection
-  trackTextSelection: function (editorType, data) {
-    if (window.va) {
-      window.va.track(`select_${editorType}_text`, this.prepareEventData(data));
-    }
-  },
+  // trackTextSelection: function (editorType, data) {
+  //   if (window.va) {
+  //     window.va.track(`select_${editorType}_text`, this.prepareEventData(data));
+  //   }
+  // },
 
   // Track button clicks
-  trackButtonClick: function (buttonName, data = {}) {
-    if (window.va) {
-      window.va.track(buttonName, this.prepareEventData(data));
-    }
-  },
+  // trackButtonClick: function (buttonName, data = {}) {
+  //   if (window.va) {
+  //     window.va.track(buttonName, this.prepareEventData(data));
+  //   }
+  // },
 
   // Utility function for creating debounced tracking functions
   createDebouncedTracker: function (editorInstance, editorType) {
@@ -172,6 +172,6 @@ window.Analytics = {
 // Track app initialization when the page loads
 document.addEventListener('DOMContentLoaded', function () {
   if (window.Analytics) {
-    window.Analytics.trackAppInit();
+    // window.Analytics.trackAppInit();
   }
 }); 
